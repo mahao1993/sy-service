@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:mysql://127.0.0.1:23306/sanyangdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:sanyangdbPootPass123!}
+    driver-class-name: com.mysql.cj.jdbc.Driver

@@ -1,0 +1,13 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: sy-service
+  profiles:
+    default: dev
+
+security:
+  api-key:
+    header-name: ${API_KEY_HEADER:Authorization}
+    value: ${API_KEY:f9b9-4558-954b-895ad5d3cc80}

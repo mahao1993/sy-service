@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://${DB_HOST:106.54.36.135}:${DB_PORT:3306}/${DB_NAME:sanyangdb}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:sanyangdbPootPass123!}
+    driver-class-name: com.mysql.cj.jdbc.Driver
