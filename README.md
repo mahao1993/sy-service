@@ -53,7 +53,15 @@ The service starts with the `dev` profile by default. Shared settings live in `a
 | `DB_PASSWORD` | `sanyangdbPootPass123!` | MySQL password |
 | `API_KEY_HEADER` | `X-API-Key` | Header name for API key |
 | `API_KEY` | `change-me` | API key expected by the server |
-| `SERVER_PORT` | `8080` | Service port |
+| `SERVER_PORT` | `8080` | Service port, and `start-prod.sh` defaults it to `80` when unset |
+
+## Logging
+
+- `info.log`: records `INFO`, `WARN`, and `ERROR`
+- `error.log`: records `ERROR` only
+- In `prod`, log files are written to the `logs/` directory beside the jar
+- Historical logs are rolled by date and compressed to `logs/archive/*.log.gz`
+- If a single day's log grows too large, it is further split by size within that date
 
 ## Dev run
 
@@ -87,17 +95,24 @@ Optional flags:
 ## Prod shell script
 
 ```bash
-export API_KEY="your-api-key"
+mkdir -p /service/sy-service
+cp sy-service-0.0.1-SNAPSHOT.jar /service/sy-service/
 chmod +x ./scripts/start-prod.sh
 ./scripts/start-prod.sh
 ```
 
+The shell script starts on port `80` by default. Override it when needed:
+
+```bash
+SERVER_PORT=8080 ./scripts/start-prod.sh
+```
+
 Optional flags:
 
-- `--skip-build`: start from the existing jar under `target`
 - `--foreground`: run in the current terminal
+- `--app-home /service/sy-service`: override application home
 - `--java-home /opt/jdk-17`: override `JAVA_HOME`
-- `--api-key your-api-key`: pass API key directly
+- `--api-key your-api-key`: pass API key directly if you want to override the configured default
 
 ## Example request
 

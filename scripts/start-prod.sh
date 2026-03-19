@@ -2,19 +2,20 @@
 
 set -euo pipefail
 
+APP_HOME_ARG="${APP_HOME:-/service/sy-service}"
 JAVA_HOME_ARG="${JAVA_HOME:-}"
 API_KEY_ARG="${API_KEY:-}"
-SKIP_BUILD="false"
 FOREGROUND="false"
+JAR_NAME="sy-service-0.0.1-SNAPSHOT.jar"
 
 usage() {
   cat <<'EOF'
 Usage: ./scripts/start-prod.sh [options]
 
 Options:
+  --app-home <path>    Override application home, default: /service/sy-service
   --java-home <path>   Override JAVA_HOME
   --api-key <value>    Set API_KEY for the process
-  --skip-build         Start from the existing jar under target
   --foreground         Run in the current terminal
   --help               Show this help message
 EOF
@@ -22,6 +23,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --app-home)
+      APP_HOME_ARG="${2:-}"
+      shift 2
+      ;;
     --java-home)
       JAVA_HOME_ARG="${2:-}"
       shift 2
@@ -29,10 +34,6 @@ while [[ $# -gt 0 ]]; do
     --api-key)
       API_KEY_ARG="${2:-}"
       shift 2
-      ;;
-    --skip-build)
-      SKIP_BUILD="true"
-      shift
       ;;
     --foreground)
       FOREGROUND="true"
@@ -50,17 +51,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-TARGET_DIR="${PROJECT_ROOT}/target"
-LOG_DIR="${PROJECT_ROOT}/logs"
-RUN_DIR="${PROJECT_ROOT}/run"
+APP_HOME="${APP_HOME_ARG}"
+RUN_DIR="${APP_HOME}/run"
 PID_FILE="${RUN_DIR}/sy-service.pid"
-STDOUT_LOG="${LOG_DIR}/sy-service.out.log"
-STDERR_LOG="${LOG_DIR}/sy-service.err.log"
-DEFAULT_JAR="${TARGET_DIR}/sy-service-0.0.1-SNAPSHOT.jar"
+JAR_FILE="${APP_HOME}/${JAR_NAME}"
 
-mkdir -p "${LOG_DIR}" "${RUN_DIR}"
+mkdir -p "${RUN_DIR}"
 
 if [[ -n "${JAVA_HOME_ARG}" ]]; then
   JAVA_CMD="${JAVA_HOME_ARG}/bin/java"
@@ -73,15 +69,24 @@ if [[ -z "${JAVA_CMD}" || ! -x "${JAVA_CMD}" ]]; then
   exit 1
 fi
 
-if [[ -z "${API_KEY_ARG}" || "${API_KEY_ARG}" == "change-me" ]]; then
-  echo "API_KEY is required for prod startup. Export API_KEY or pass --api-key." >&2
+if [[ ! -d "${APP_HOME}" ]]; then
+  echo "Application home does not exist: ${APP_HOME}" >&2
   exit 1
 fi
 
-export API_KEY="${API_KEY_ARG}"
+if [[ ! -f "${JAR_FILE}" ]]; then
+  echo "Jar file was not found: ${JAR_FILE}" >&2
+  echo "Please upload D:\\code\\xiaoluo\\sy-service\\target\\sy-service-0.0.1-SNAPSHOT.jar to ${APP_HOME}/" >&2
+  exit 1
+fi
+
+if [[ -n "${API_KEY_ARG}" ]]; then
+  export API_KEY="${API_KEY_ARG}"
+fi
 if [[ -n "${JAVA_HOME_ARG}" ]]; then
   export JAVA_HOME="${JAVA_HOME_ARG}"
 fi
+export SERVER_PORT="${SERVER_PORT:-80}"
 
 if [[ -f "${PID_FILE}" ]]; then
   EXISTING_PID="$(tr -d '[:space:]' < "${PID_FILE}")"
@@ -92,27 +97,16 @@ if [[ -f "${PID_FILE}" ]]; then
   rm -f "${PID_FILE}"
 fi
 
-if [[ "${SKIP_BUILD}" != "true" || ! -f "${DEFAULT_JAR}" ]]; then
-  if ! command -v mvn >/dev/null 2>&1; then
-    echo "mvn was not found and no jar is available under target. Build the project first or install Maven." >&2
-    exit 1
-  fi
+JAR_DIR="$(cd "$(dirname "${JAR_FILE}")" && pwd)"
+LOG_DIR="${JAR_DIR}/logs"
+STDOUT_LOG="${LOG_DIR}/sy-service.out.log"
+STDERR_LOG="${LOG_DIR}/sy-service.err.log"
 
-  echo "Packaging application..."
-  (
-    cd "${PROJECT_ROOT}"
-    mvn -B -DskipTests package
-  )
-fi
-
-JAR_FILE="$(find "${TARGET_DIR}" -maxdepth 1 -type f -name 'sy-service-*.jar' ! -name '*.original' | head -n 1)"
-if [[ -z "${JAR_FILE}" ]]; then
-  echo "No runnable jar was found under ${TARGET_DIR}." >&2
-  exit 1
-fi
+mkdir -p "${LOG_DIR}"
 
 JAVA_ARGS=(
   "-Dfile.encoding=UTF-8"
+  "-DLOG_HOME=${LOG_DIR}"
   "-jar"
   "${JAR_FILE}"
   "--spring.profiles.active=prod"
@@ -120,7 +114,7 @@ JAVA_ARGS=(
 
 if [[ "${FOREGROUND}" == "true" ]]; then
   echo "Starting sy-service in foreground with prod profile..."
-  cd "${PROJECT_ROOT}"
+  cd "${APP_HOME}"
   exec "${JAVA_CMD}" "${JAVA_ARGS[@]}"
 fi
 

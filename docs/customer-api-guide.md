@@ -20,13 +20,13 @@
 基础地址示例：
 
 ```text
-https://your-api-host
+http://106.54.36.135
 ```
 
 完整请求示例：
 
 ```text
-https://your-api-host/api/articles/123
+http://106.54.36.135/api/articles/123
 ```
 
 ## 认证方式
@@ -36,7 +36,7 @@ https://your-api-host/api/articles/123
 请在请求头中传入：
 
 ```text
-X-API-Key: your-api-key
+X-API-Key: f9b9-4558-954b-895ad5d3cc80
 ```
 
 如果 API Key 缺失或错误，服务端将返回 `401 Unauthorized`。
@@ -50,8 +50,8 @@ X-API-Key: your-api-key
 ## 请求示例
 
 ```bash
-curl -X GET "https://your-api-host/api/articles/123" \
-  -H "X-API-Key: your-api-key"
+curl -X GET "http://106.54.36.135/api/articles/123" \
+  -H "X-API-Key: f9b9-4558-954b-895ad5d3cc80"
 ```
 
 ## 成功返回
@@ -147,4 +147,3 @@ HTTP 状态码：
 - 请使用 UTF-8 编码处理响应内容
 - 请妥善保管 API Key，避免泄露
 - 如调用失败，请优先检查请求地址、API Key 和网络连通性
-- 如需生产域名、API Key 或 IP 白名单信息，请联系服务提供方

@@ -8,6 +8,8 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    private static final Logger log = LoggerFactory.getLogger(ApiKeyAuthFilter.class);
 
     private final ApiKeyProperties apiKeyProperties;
     private final ObjectMapper objectMapper;
@@ -42,11 +45,18 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         String providedApiKey = request.getHeader(apiKeyProperties.getHeaderName());
 
         if (configuredApiKey == null || configuredApiKey.isBlank()) {
+            log.error("API key is not configured on the server.");
             writeUnauthorized(response, "API key is not configured on the server.");
             return;
         }
 
         if (!configuredApiKey.equals(providedApiKey)) {
+            log.info(
+                    "Rejected request because of invalid API key, uri={}, method={}, remoteAddr={}",
+                    request.getRequestURI(),
+                    request.getMethod(),
+                    request.getRemoteAddr()
+            );
             writeUnauthorized(response, "Invalid API key.");
             return;
         }
